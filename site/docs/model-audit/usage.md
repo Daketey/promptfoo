@@ -196,6 +196,18 @@ promptfoo scan-model models/ \
 # Enable strict mode for enhanced security validation
 promptfoo scan-model model.pkl --strict
 
+# Discover available scanner IDs and class names
+promptfoo scan-model --list-scanners
+
+# Run only selected scanners by ID
+promptfoo scan-model models/ --scanners pickle,tf_savedmodel
+
+# Repeat scanner-selection flags when that is clearer in scripts
+promptfoo scan-model models/ --scanners pickle --scanners tf_savedmodel
+
+# Exclude a scanner from the default scanner set
+promptfoo scan-model models/ --exclude-scanner weight_distribution
+
 # Strict mode with additional output options
 promptfoo scan-model models/ \
   --strict \
@@ -205,84 +217,10 @@ promptfoo scan-model models/ \
 
 ### Scanner Selection
 
-ModelAudit allows you to selectively run specific scanners or use predefined scanner profiles. This enables targeted scanning aligned with specific threat categories, faster feedback loops, and improved resource efficiency.
-
-#### Including or Excluding Scanners
-
-Use `--include-scanner` or `--exclude-scanner` for fine-grained control over which scanners run:
-
-```bash
-# Include specific scanners (adds to default set)
-promptfoo scan-model models/ --include-scanner PickleScanner H5Scanner
-
-# Exclude specific scanners from running
-promptfoo scan-model models/ --exclude-scanner WeightDistributionScanner
-
-# Combine both - add some, remove others
-promptfoo scan-model models/ \
-  --include-scanner PickleScanner \
-  --exclude-scanner WeightDistributionScanner
-```
-
-#### Scanner Profiles
-
-Use predefined scanner profiles for common scanning scenarios:
-
-```bash
-# Quick scan - runs essential security checks only
-promptfoo scan-model models/ --profile quick-scan
-
-# Focus on serialization attacks (pickle, torch, etc.)
-promptfoo scan-model models/ --profile serialization-attacks
-
-# Verify model file format integrity
-promptfoo scan-model models/ --profile format-integrity
-
-# Inspect archive-based model formats (zip, tar)
-promptfoo scan-model models/ --profile archive-inspection
-
-# Scan for secrets, API keys, and network threats
-promptfoo scan-model models/ --profile secrets-network-threats
-
-# Analyze model behavior and weight patterns
-promptfoo scan-model models/ --profile model-behavior
-
-# Run all available scanners (default)
-promptfoo scan-model models/ --profile full-audit
-```
-
-#### Combining Scanner Selection Options
-
-You can combine scanner selection options with other ModelAudit features:
-
-```bash
-# Quick scan with JSON output
-promptfoo scan-model models/ --profile quick-scan --format json --output results.json
-
-# Include specific scanners with custom resource limits
-promptfoo scan-model models/ \
-  --include-scanner PickleScanner TensorflowSavedModelScanner \
-  --max-size 1GB \
-  --timeout 300 \
-  --verbose
-
-# Exclude scanner from a profile-based scan
-promptfoo scan-model models/ \
-  --profile serialization-attacks \
-  --exclude-scanner WeightDistributionScanner
-```
-
-#### Use Cases for Scanner Selection
-
-Scanner selection is particularly useful for:
-
-- **CI/CD Integration**: Run quick scans on pull requests and comprehensive scans on merges
-- **Risk Prioritization**: Focus on high-severity vulnerability scanners first
-- **Threat Modeling**: Align scans with specific threat categories relevant to your deployment
-- **Performance Optimization**: Reduce scan time by running only relevant scanners
-- **Incident Response**: Run targeted forensic scans when investigating specific threats
-
-For a complete list of available scanners and their capabilities, see the [Scanners documentation](/docs/model-audit/scanners).
+Use `--list-scanners` to discover registered scanner IDs and class names before narrowing a scan.
+Use `--scanners` for focused triage scans when you only want a subset of scanners. Use
+`--exclude-scanner` when the default scanner set is right except for a noisy or irrelevant scanner.
+Both options accept comma-separated scanner values and can also be repeated.
 
 ### Sharing Results
 

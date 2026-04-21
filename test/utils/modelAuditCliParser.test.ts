@@ -300,6 +300,9 @@ describe('ModelAudit CLI Parser', () => {
         '--dry-run',
         '--no-cache',
         '--stream',
+        '--scanners',
+        '--exclude-scanner',
+        '--list-scanners',
       ];
 
       expectedOptions.forEach((option) => {
@@ -422,108 +425,45 @@ describe('ModelAudit CLI Parser', () => {
       });
     });
 
-    describe('Scanner selection options', () => {
-      it('should parse --include-scanner option with multiple scanners', () => {
-        const paths = ['model.pkl'];
-        const options: ModelAuditCliOptions = {
-          includeScanner: ['PickleScanner', 'TensorflowSavedModelScanner'],
-        };
-
-        const result = parseModelAuditArgs(paths, options);
+    describe('scanner selection options', () => {
+      it('should parse selected scanners and excluded scanners', () => {
+        const result = parseModelAuditArgs(['model.pkl'], {
+          scanners: ['pickle,tf_savedmodel', 'PickleScanner'],
+          excludeScanner: ['weight_distribution'],
+        });
 
         expect(result.args).toEqual([
           'scan',
           'model.pkl',
-          '--include-scanner',
+          '--scanners',
+          'pickle,tf_savedmodel',
+          '--scanners',
           'PickleScanner',
-          '--include-scanner',
-          'TensorflowSavedModelScanner',
-        ]);
-      });
-
-      it('should parse --include-scanner option', () => {
-        const paths = ['model.pkl'];
-        const options: ModelAuditCliOptions = {
-          includeScanner: ['PickleScanner', 'H5Scanner'],
-        };
-
-        const result = parseModelAuditArgs(paths, options);
-
-        expect(result.args).toEqual([
-          'scan',
-          'model.pkl',
-          '--include-scanner',
-          'PickleScanner',
-          '--include-scanner',
-          'H5Scanner',
-        ]);
-      });
-
-      it('should parse --exclude-scanner option', () => {
-        const paths = ['model.pkl'];
-        const options: ModelAuditCliOptions = {
-          excludeScanner: ['WeightDistributionScanner'],
-        };
-
-        const result = parseModelAuditArgs(paths, options);
-
-        expect(result.args).toEqual([
-          'scan',
-          'model.pkl',
           '--exclude-scanner',
-          'WeightDistributionScanner',
+          'weight_distribution',
         ]);
       });
 
-      it('should parse --profile option', () => {
-        const paths = ['model.pkl'];
-        const options: ModelAuditCliOptions = {
-          profile: 'quick-scan',
-        };
-
-        const result = parseModelAuditArgs(paths, options);
-
-        expect(result.args).toEqual(['scan', 'model.pkl', '--profile', 'quick-scan']);
-      });
-
-      it('should combine scanner selection with other options', () => {
-        const paths = ['model.pkl'];
-        const options: ModelAuditCliOptions = {
-          includeScanner: ['PickleScanner'],
-          excludeScanner: ['WeightDistributionScanner'],
-          profile: 'serialization-attacks',
+      it('should parse scanner catalog listing without paths', () => {
+        const result = parseModelAuditArgs([], {
+          listScanners: true,
           format: 'json',
-          verbose: true,
-        };
+        });
 
-        const result = parseModelAuditArgs(paths, options);
-
-        expect(result.args).toContain('--include-scanner');
-        expect(result.args).toContain('PickleScanner');
-        expect(result.args).toContain('--exclude-scanner');
-        expect(result.args).toContain('WeightDistributionScanner');
-        expect(result.args).toContain('--profile');
-        expect(result.args).toContain('serialization-attacks');
-        expect(result.args).toContain('--format');
-        expect(result.args).toContain('json');
-        expect(result.args).toContain('--verbose');
+        expect(result.args).toEqual(['scan', '--format', 'json', '--list-scanners']);
       });
 
-      it('should validate scanner selection options are supported', () => {
-        const args = [
+      it('should validate scanner selection arguments as supported', () => {
+        const result = validateModelAuditArgs([
           'scan',
-          'model.pkl',
-          '--include-scanner',
-          'PickleScanner',
-          '--include-scanner',
-          'H5Scanner',
+          '--list-scanners',
+          '--format',
+          'json',
+          '--scanners',
+          'pickle',
           '--exclude-scanner',
-          'WeightDistributionScanner',
-          '--profile',
-          'quick-scan',
-        ];
-
-        const result = validateModelAuditArgs(args);
+          'weight_distribution',
+        ]);
 
         expect(result.valid).toBe(true);
         expect(result.unsupportedArgs).toEqual([]);
